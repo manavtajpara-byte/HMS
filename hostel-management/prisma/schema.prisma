@@ -1,0 +1,202 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id            String    @id @default(cuid())
+  number        String    @unique
+  type          String    // "TWO_SHARING" or "THREE_SHARING"
+  price         Float?    // Monthly fee
+  capacity      Int
+  
+  occupants          Profile[]
+  roomChangeRequests RoomChangeRequest[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?
+  role          String    @default("STUDENT") // Storing as String for flexibility, validated in app
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  profile       Profile?
+  pollsCreated  Poll[]
+  pollResponses PollResponse[]
+  messSuggestions MessSuggestion[]
+  mealOptOuts     MealOptOut[]
+  announcements   Announcement[]
+  messHolidays    MessHoliday[]
+  mealReviews        MealReview[]
+  entryExitLogs      EntryExitLog[]
+  roomChangeRequests RoomChangeRequest[]
+  hostelSettings     HostelSettings[]
+  notifications      Notification[]
+}
+
+
+model Profile {
+  id              String  @id @default(cuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  roomNumber      String?
+  hostelName      String?
+  gender          String?
+  contactNumber   String?
+  guardianContact String?
+  address         String?
+  homeTown        String?
+  degree          String?
+  yearOfDegree    String?
+  fullName        String?
+  yearlyFee       Float?    // Yearly hostel fee
+  
+  room            Room?   @relation(fields: [roomId], references: [id])
+  roomId          String?
+}
+
+model Poll {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("OPEN") // OPEN, CLOSED
+  createdAt   DateTime @default(now())
+  
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
+
+  options     PollOption[]
+  responses   PollResponse[]
+}
+
+model PollOption {
+  id        String   @id @default(cuid())
+  text      String
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId    String
+  
+  responses PollResponse[]
+}
+
+model PollResponse {
+  id           String     @id @default(cuid())
+  poll         Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId       String
+  
+  pollOption   PollOption @relation(fields: [pollOptionId], references: [id], onDelete: Cascade)
+  pollOptionId String
+  
+  student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId    String
+
+  @@unique([pollId, studentId]) // Prevent multiple votes per poll
+}
+
+model MessSuggestion {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+}
+
+model MealOptOut {
+  id        String   @id @default(cuid())
+  date      DateTime // YYYY-MM-DDT00:00:00Z
+  mealType  String   // "LUNCH" or "DINNER"
+  createdAt DateTime @default(now())
+
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+
+  @@unique([studentId, date, mealType]) // One opt-out per meal per day
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+}
+
+model MessHoliday {
+  id          String   @id @default(cuid())
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt   DateTime @default(now())
+
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId   String
+}
+
+model MealReview {
+  id        String   @id @default(cuid())
+  date      DateTime // YYYY-MM-DDT00:00:00Z (stored as midnight UTC)
+  mealType  String   // "BREAKFAST", "LUNCH", "DINNER"
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+
+  @@unique([studentId, date, mealType]) // One review per meal per day
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+
+model EntryExitLog {
+  id        String   @id @default(cuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  type      String   // "ENTRY" or "EXIT"
+  reason    String?
+  timestamp DateTime @default(now())
+}
+
+model RoomChangeRequest {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  requestedRoomId String
+  requestedRoom   Room     @relation(fields: [requestedRoomId], references: [id], onDelete: Cascade)
+  reason          String
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  rectorMessage   String?
+  createdAt       DateTime @default(now())
+}
+
+model HostelSettings {
+  id          String   @id @default(cuid())
+  hostelName  String   @default("University Hostel")
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+  updater     User?    @relation(fields: [updatedBy], references: [id])
+}
