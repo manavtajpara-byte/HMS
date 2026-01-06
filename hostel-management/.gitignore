@@ -48,7 +48,8 @@ next-env.d.ts
 *.sqlite3
 
 # presentation
-HostelNest_Hackathon_Presentation.pptx
+*.pptx
+*.ppt
 
 # IDE
 .vscode/

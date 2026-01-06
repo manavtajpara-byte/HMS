@@ -34,11 +34,20 @@ export const authConfig = {
         async jwt({ token, user }) {
             if (user) {
                 // Return a fresh token object with ONLY the id and role
-                // to prevent any large fields (like base64 images) from the user object
-                // from bloating the session cookie.
                 return {
                     id: user.id as string,
                     role: user.role as string,
+                };
+            }
+            // Sanitize existing token to ensure no large fields persist
+            if (token) {
+                return {
+                    id: token.id as string,
+                    role: token.role as string,
+                    sub: token.sub,
+                    exp: token.exp,
+                    iat: token.iat,
+                    jti: token.jti,
                 };
             }
             return token;
