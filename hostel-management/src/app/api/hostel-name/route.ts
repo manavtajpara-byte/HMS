@@ -10,7 +10,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { hostelName } = await request.json();
+        const { hostelName, upiId, merchantName } = await request.json();
 
         if (!hostelName || hostelName.trim().length === 0) {
             return NextResponse.json({ error: "Hostel name is required" }, { status: 400 });
@@ -20,11 +20,15 @@ export async function POST(request: Request) {
             where: { id: "default" },
             update: {
                 hostelName: hostelName.trim(),
+                upiId: upiId?.trim() || null,
+                merchantName: merchantName?.trim() || null,
                 updatedBy: session.user.id,
             },
             create: {
                 id: "default",
                 hostelName: hostelName.trim(),
+                upiId: upiId?.trim() || null,
+                merchantName: merchantName?.trim() || null,
                 updatedBy: session.user.id,
             },
         });
@@ -32,6 +36,9 @@ export async function POST(request: Request) {
         revalidatePath("/");
         revalidatePath("/login");
         revalidatePath("/rector");
+        revalidatePath("/student");
+        revalidatePath("/student/fees");
+        revalidatePath("/rector/fees");
 
         return NextResponse.json({ success: true, hostelName: hostelName.trim() });
     } catch (error: any) {

@@ -194,9 +194,11 @@ model RoomChangeRequest {
 }
 
 model HostelSettings {
-  id          String   @id @default(cuid())
-  hostelName  String   @default("University Hostel")
-  updatedAt   DateTime @updatedAt
-  updatedBy   String?
-  updater     User?    @relation(fields: [updatedBy], references: [id])
+  id            String   @id @default(cuid())
+  hostelName    String   @default("University Hostel")
+  upiId         String?  // For QR code payments
+  merchantName  String?  // For QR code payments
+  updatedAt     DateTime @updatedAt
+  updatedBy     String?
+  updater       User?    @relation(fields: [updatedBy], references: [id])
 }

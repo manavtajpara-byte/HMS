@@ -3,9 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function HostelNameForm({ defaultName }: { defaultName: string }) {
+export default function HostelNameForm({
+    defaultName,
+    defaultUpiId,
+    defaultMerchantName
+}: {
+    defaultName: string,
+    defaultUpiId?: string | null,
+    defaultMerchantName?: string | null
+}) {
     const router = useRouter();
     const [currentName, setCurrentName] = useState(defaultName);
+    const [upiId, setUpiId] = useState(defaultUpiId || "");
+    const [merchantName, setMerchantName] = useState(defaultMerchantName || "");
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [isPending, setIsPending] = useState(false);
 
@@ -20,61 +30,95 @@ export default function HostelNameForm({ defaultName }: { defaultName: string })
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ hostelName: currentName }),
+                body: JSON.stringify({
+                    hostelName: currentName,
+                    upiId: upiId,
+                    merchantName: merchantName
+                }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to update hostel name');
+                throw new Error(data.error || 'Failed to update hostel settings');
             }
 
-            setMessage({ type: 'success', text: 'Hostel name updated successfully!' });
+            setMessage({ type: 'success', text: 'Hostel settings updated successfully!' });
             router.refresh();
         } catch (error: any) {
-            setMessage({ type: 'error', text: error.message || 'Failed to update hostel name' });
+            setMessage({ type: 'error', text: error.message || 'Failed to update hostel settings' });
         } finally {
             setIsPending(false);
         }
     };
 
     return (
-        <div className="bg-gradient-to-br from-black to-gray-800 rounded-3xl p-8 shadow-2xl text-white">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6">Hostel Configuration</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                    <label className="text-sm font-bold text-gray-300 mb-2 block">Hostel Name</label>
-                    <input
-                        name="hostelName"
-                        value={currentName}
-                        onChange={(e) => setCurrentName(e.target.value)}
-                        className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:bg-white/20 focus:border-white/40 outline-none transition-all"
-                        placeholder="Enter hostel name"
-                        required
-                    />
+        <div className="bg-gradient-to-br from-black to-gray-800 rounded-[2.5rem] p-10 shadow-2xl text-white relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-3xl rounded-full -mr-32 -mt-32 group-hover:bg-white/10 transition-all duration-700" />
+
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-10 selection:bg-white selection:text-black">Configuration Hub</h2>
+
+            <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="md:col-span-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3 block">Hostel Identifier</label>
+                        <input
+                            name="hostelName"
+                            value={currentName}
+                            onChange={(e) => setCurrentName(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-white/20 focus:bg-white/10 focus:border-white/30 outline-none transition-all duration-500 font-bold"
+                            placeholder="Primary Name"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3 block">Merchant UPI ID</label>
+                        <input
+                            name="upiId"
+                            value={upiId}
+                            onChange={(e) => setUpiId(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-white/20 focus:bg-white/10 focus:border-white/30 outline-none transition-all duration-500 font-mono text-sm"
+                            placeholder="e.g., hostel@okaxis"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3 block">Verified Name</label>
+                        <input
+                            name="merchantName"
+                            value={merchantName}
+                            onChange={(e) => setMerchantName(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder-white/20 focus:bg-white/10 focus:border-white/30 outline-none transition-all duration-500 font-bold"
+                            placeholder="Merchant Name"
+                        />
+                    </div>
                 </div>
 
                 {message && (
-                    <div className={`p-4 rounded-xl border ${message.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-300' : 'bg-red-500/10 border-red-500/20 text-red-300'}`}>
-                        <p className="text-sm font-bold">{message.text}</p>
+                    <div className={`p-5 rounded-2xl border animate-in slide-in-from-top-2 duration-500 ${message.type === 'success' ? 'bg-white/5 border-white/20 text-white' : 'bg-red-500/10 border-red-500/20 text-red-300'}`}>
+                        <p className="text-xs font-bold flex items-center gap-3">
+                            {message.type === 'success' && <span className="w-2 h-2 bg-white rounded-full animate-pulse" />}
+                            {message.text}
+                        </p>
                     </div>
                 )}
 
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="px-6 py-3 bg-white text-black font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-gray-100 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="h-14 px-10 bg-white text-black font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 shadow-[0_20px_40px_-15px_rgba(255,255,255,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-4 group"
                 >
                     {isPending ? (
                         <>
-                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Updating...
+                            <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            Syncing Data...
                         </>
                     ) : (
-                        'Update Hostel Name'
+                        <>
+                            Apply Changes
+                            <div className="w-1.5 h-1.5 bg-black rounded-full group-hover:bg-black/50 transition-colors" />
+                        </>
                     )}
                 </button>
             </form>

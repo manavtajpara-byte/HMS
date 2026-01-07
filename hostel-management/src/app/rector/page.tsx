@@ -56,7 +56,11 @@ export default async function RectorDashboard() {
             </div>
 
             {/* Hostel Settings */}
-            <HostelNameForm defaultName={hostelSettings.hostelName} />
+            <HostelNameForm
+                defaultName={hostelSettings.hostelName}
+                defaultUpiId={hostelSettings.upiId}
+                defaultMerchantName={hostelSettings.merchantName}
+            />
 
             {/* High-Level Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

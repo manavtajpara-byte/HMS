@@ -446,11 +446,42 @@ export async function submitMealReview(formData: FormData) {
                 comment
             }
         });
+
+        // --- LOW FOOD QUALITY ALERT ---
+        const reviews = await (db as any).mealReview?.findMany({
+            where: {
+                date: today,
+                mealType: mealType as any
+            }
+        });
+
+        const averageRating = reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
+
+        if (averageRating < 3.0) {
+            const rectors = await db.user.findMany({
+                where: { role: "RECTOR" }
+            });
+
+            for (const rector of rectors) {
+                await (db as any).notification?.create({
+                    data: {
+                        userId: rector.id,
+                        title: "Low Food Quality Alert",
+                        content: `Average rating for ${mealType} today: ${averageRating.toFixed(1)}/5.0`,
+                        type: "SYSTEM",
+                        read: false
+                    }
+                });
+            }
+        }
+        // --------------------------------
     } catch (e) {
         console.error("Error submitting review:", e);
     }
 
     revalidatePath("/rector");
+    revalidatePath("/rector/meals");
+    revalidatePath("/student/meals");
 }
 
 export async function logMovement(formData: FormData) {
@@ -570,7 +601,10 @@ export async function updateHostelName(formData: FormData) {
     }
 
     const hostelName = formData.get("hostelName") as string;
-    console.log("Updating hostel name to:", hostelName);
+    const upiId = formData.get("upiId") as string;
+    const merchantName = formData.get("merchantName") as string;
+
+    console.log("Updating hostel settings:", { hostelName, upiId, merchantName });
 
     if (!hostelName || hostelName.trim().length === 0) {
         console.error("Hostel name is empty");
@@ -582,17 +616,21 @@ export async function updateHostelName(formData: FormData) {
             where: { id: "default" },
             update: {
                 hostelName: hostelName.trim(),
+                upiId: upiId?.trim() || null,
+                merchantName: merchantName?.trim() || null,
                 updatedBy: session.user.id,
             },
             create: {
                 id: "default",
                 hostelName: hostelName.trim(),
+                upiId: upiId?.trim() || null,
+                merchantName: merchantName?.trim() || null,
                 updatedBy: session.user.id,
             },
         });
-        console.log("Hostel name updated successfully:", result);
+        console.log("Hostel settings updated successfully:", result);
     } catch (error) {
-        console.error("Error updating hostel name:", error);
+        console.error("Error updating hostel settings:", error);
         throw error;
     }
 
@@ -600,6 +638,8 @@ export async function updateHostelName(formData: FormData) {
     revalidatePath("/login");
     revalidatePath("/rector");
     revalidatePath("/student");
+    revalidatePath("/student/fees");
+    revalidatePath("/rector/fees");
     console.log("Paths revalidated");
 }
 
@@ -620,4 +660,45 @@ export async function deleteAnnouncement(formData: FormData) {
 
     revalidatePath("/student");
     revalidatePath("/rector");
+}
+export async function createRector(formData: FormData) {
+    const session = await auth();
+    if (session?.user?.role !== "ADMIN") {
+        throw new Error("Unauthorized");
+    }
+
+    const name = formData.get("name") as string;
+    const year = new Date().getFullYear();
+    const random = Math.floor(1000 + Math.random() * 9000);
+    const rectorId = `RECTOR-${year}-${random}`;
+
+    // For compatibility with the current login system which requires email, 
+    // we use the generated ID as the email prefix.
+    const email = `${rectorId.toLowerCase()}@hms.com`;
+
+    // Generate a secure temporary password
+    const password = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    try {
+        await db.user.create({
+            data: {
+                name,
+                email, // This is the ID used for login
+                password: hashedPassword,
+                role: "RECTOR",
+                profile: {
+                    create: {
+                        fullName: name,
+                    }
+                }
+            }
+        });
+
+        revalidatePath("/admin/rectors");
+        return { success: true, rectorId: email, password };
+    } catch (error) {
+        console.error("Error creating rector:", error);
+        return { success: false, error: "Failed to create rector. ID might already exist." };
+    }
 }

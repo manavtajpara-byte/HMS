@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, LogOut, ClipboardList, Activity, Utensils, Bell, Users, Bed, GitPullRequest } from 'lucide-react';
+import { Home, User, LogOut, ClipboardList, Activity, Utensils, Bell, Users, Bed, GitPullRequest, Banknote } from 'lucide-react';
 import { signOut as nextAuthSignOut } from 'next-auth/react';
 
 type SidebarProps = {
-    role: 'STUDENT' | 'RECTOR' | 'INSPECTOR';
+    role: 'STUDENT' | 'RECTOR' | 'INSPECTOR' | 'ADMIN';
     user?: {
         name: string | null;
         email: string;
@@ -16,7 +16,7 @@ type SidebarProps = {
 
 export function Sidebar({ role, user }: SidebarProps) {
     const pathname = usePathname();
-    const basePath = role === 'STUDENT' ? '/student' : role === 'RECTOR' ? '/rector' : '/inspector';
+    const basePath = role === 'STUDENT' ? '/student' : role === 'RECTOR' ? '/rector' : role === 'ADMIN' ? '/admin' : '/inspector';
 
     const links = [
         { href: basePath, label: 'Dashboard', icon: Home },
@@ -28,11 +28,13 @@ export function Sidebar({ role, user }: SidebarProps) {
             { href: '/student/directory', label: 'Directory', icon: ClipboardList },
             { href: '/student/meals', label: 'Meal Reviews', icon: Utensils },
             { href: '/student/movement', label: 'Movement', icon: Activity },
-            { href: '/student/rooms', label: 'Room Change', icon: Bed }
+            { href: '/student/rooms', label: 'Room Change', icon: Bed },
+            { href: '/student/fees', label: 'Fees', icon: Banknote }
         );
     } else if (role === 'RECTOR') {
         links.push(
             { href: '/rector/students', label: 'Students', icon: Users },
+            { href: '/rector/fees', label: 'Fees', icon: Banknote },
             { href: '/rector/movement', label: 'Movement Logs', icon: Activity },
             { href: '/rector/meals', label: 'Meal Analytics', icon: Utensils },
             { href: '/rector/announcements', label: 'Announcements', icon: Bell },
@@ -41,6 +43,11 @@ export function Sidebar({ role, user }: SidebarProps) {
     } else if (role === 'INSPECTOR') {
         links.push(
             { href: '/inspector', label: 'Audit Hub', icon: ClipboardList }
+        );
+    } else if (role === 'ADMIN') {
+        links.push(
+            { href: '/admin/rectors', label: 'Manage Rectors', icon: Users },
+            { href: '/admin/settings', label: 'Global Settings', icon: GitPullRequest }
         );
     }
 

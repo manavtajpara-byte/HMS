@@ -10,19 +10,22 @@ export const authConfig = {
             const isOnStudent = nextUrl.pathname.startsWith('/student');
             const isOnRector = nextUrl.pathname.startsWith('/rector');
             const isOnInspector = nextUrl.pathname.startsWith('/inspector');
+            const isOnAdmin = nextUrl.pathname.startsWith('/admin');
 
-            if (isOnStudent || isOnRector || isOnInspector) {
+            if (isOnStudent || isOnRector || isOnInspector || isOnAdmin) {
                 if (isLoggedIn) {
                     const role = auth.user?.role;
                     if (isOnStudent && role !== 'STUDENT') return false;
                     if (isOnRector && role !== 'RECTOR') return false;
                     if (isOnInspector && role !== 'INSPECTOR') return false;
+                    if (isOnAdmin && role !== 'ADMIN') return false;
                     return true;
                 }
                 return false;
             } else if (isLoggedIn) {
                 if (nextUrl.pathname === '/login' || nextUrl.pathname === '/') {
                     const role = auth.user?.role;
+                    if (role === 'ADMIN') return Response.redirect(new URL('/admin', nextUrl));
                     if (role === 'RECTOR') return Response.redirect(new URL('/rector', nextUrl));
                     if (role === 'STUDENT') return Response.redirect(new URL('/student', nextUrl));
                     if (role === 'INSPECTOR') return Response.redirect(new URL('/inspector', nextUrl));

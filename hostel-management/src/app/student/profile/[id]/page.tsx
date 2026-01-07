@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { submitRoomChangeRequest, updateProfile, allocateRoom, setStudentYearlyFee } from "../../../actions";
 import { ImageUpload } from "@/components/ImageUpload";
+import FaceRegistration from "@/components/FaceRegistration";
 
 export default async function StudentProfile({ params }: { params: Promise<{ id: string }> }) {
     const session = await auth();
@@ -484,6 +485,13 @@ export default async function StudentProfile({ params }: { params: Promise<{ id:
                             </button>
                         </form>
                     </div>
+                </div>
+            )}
+
+            {/* Biometric Enrollment Section */}
+            {(isOwnProfile || isRector) && (
+                <div className="grid grid-cols-1 gap-8">
+                    <FaceRegistration studentId={studentData.id} />
                 </div>
             )}
         </div>
