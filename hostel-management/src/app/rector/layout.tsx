@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { Sidebar } from "@/components/Sidebar";
 import { db } from "@/lib/db";
+import NotificationCenter from "@/components/NotificationCenter";
 
 export default async function RectorLayout({ children }: { children: React.ReactNode }) {
     const session = await auth();
@@ -8,6 +9,12 @@ export default async function RectorLayout({ children }: { children: React.React
         where: { id: session?.user?.id },
         select: { name: true, email: true, image: true }
     });
+
+    const notifications = await (db as any).notification.findMany({
+        where: { userId: session?.user?.id },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+    }) || [];
 
     const hostelSettings = await (db as any).hostelSettings?.findFirst({
         where: { id: "default" }
@@ -18,7 +25,8 @@ export default async function RectorLayout({ children }: { children: React.React
             <Sidebar role="RECTOR" user={user} />
             <div className="flex-1 flex flex-col min-h-screen ml-64">
                 {/* Top Header */}
-                <header className="h-16 flex items-center justify-end px-8 border-b border-gray-100 bg-white sticky top-0 z-20">
+                <header className="h-16 flex items-center justify-between px-8 border-b border-gray-100 bg-white sticky top-0 z-20">
+                    <NotificationCenter notifications={notifications} />
                     <div className="flex items-center gap-3">
                         <div className="text-right">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 leading-none mb-1">Administrator Hub</p>

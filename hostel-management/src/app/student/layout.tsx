@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { Sidebar } from "@/components/Sidebar";
 import { db } from "@/lib/db";
+import ChatAssistant from "@/components/ChatAssistant";
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
     const session = await auth();
@@ -32,6 +33,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
                 <main className="p-8 flex-1">
                     {children}
                 </main>
+                <ChatAssistant />
             </div>
         </div>
     );

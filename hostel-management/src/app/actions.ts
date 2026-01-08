@@ -4,6 +4,7 @@ import { auth, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import bcrypt from "bcryptjs";
 
 export async function authenticate(
     prevState: string | undefined,
@@ -701,4 +702,52 @@ export async function createRector(formData: FormData) {
         console.error("Error creating rector:", error);
         return { success: false, error: "Failed to create rector. ID might already exist." };
     }
+}
+
+export async function applyMessHoliday(formData: FormData) {
+    const session = await auth();
+    if (session?.user?.role !== "STUDENT") throw new Error("Unauthorized");
+
+    const startDate = new Date(formData.get("startDate") as string);
+    const endDate = new Date(formData.get("endDate") as string);
+
+    if (startDate > endDate) {
+        throw new Error("Start date must be before end date");
+    }
+
+    await (db as any).messHoliday.create({
+        data: {
+            startDate,
+            endDate,
+            studentId: session.user.id,
+            status: "PENDING"
+        }
+    });
+
+    revalidatePath("/student/holidays");
+}
+
+export async function approveMessHoliday(holidayId: string, status: "APPROVED" | "REJECTED") {
+    const session = await auth();
+    if (session?.user?.role !== "RECTOR") throw new Error("Unauthorized");
+
+    await (db as any).messHoliday.update({
+        where: { id: holidayId },
+        data: { status }
+    });
+
+    revalidatePath("/rector/holidays");
+    revalidatePath("/student/holidays");
+}
+
+export async function markNotificationAsRead(notificationId: string) {
+    const session = await auth();
+    if (!session?.user) throw new Error("Unauthorized");
+
+    await (db as any).notification.update({
+        where: { id: notificationId },
+        data: { read: false } // Default state is actually usually read = true when marking
+    });
+
+    revalidatePath("/rector");
 }

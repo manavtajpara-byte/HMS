@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, LogOut, ClipboardList, Activity, Utensils, Bell, Users, Bed, GitPullRequest, Banknote } from 'lucide-react';
+import { Home, User, LogOut, ClipboardList, Activity, Utensils, Bell, Users, Bed, GitPullRequest, Banknote, Calendar } from 'lucide-react';
 import { signOut as nextAuthSignOut } from 'next-auth/react';
 
 type SidebarProps = {
@@ -27,6 +27,7 @@ export function Sidebar({ role, user }: SidebarProps) {
         links.push(
             { href: '/student/directory', label: 'Directory', icon: ClipboardList },
             { href: '/student/meals', label: 'Meal Reviews', icon: Utensils },
+            { href: '/student/holidays', label: 'Mess Holiday', icon: Calendar },
             { href: '/student/movement', label: 'Movement', icon: Activity },
             { href: '/student/rooms', label: 'Room Change', icon: Bed },
             { href: '/student/fees', label: 'Fees', icon: Banknote }
@@ -35,6 +36,7 @@ export function Sidebar({ role, user }: SidebarProps) {
         links.push(
             { href: '/rector/students', label: 'Students', icon: Users },
             { href: '/rector/fees', label: 'Fees', icon: Banknote },
+            { href: '/rector/holidays', label: 'Holiday Approvals', icon: Calendar },
             { href: '/rector/movement', label: 'Movement Logs', icon: Activity },
             { href: '/rector/meals', label: 'Meal Analytics', icon: Utensils },
             { href: '/rector/announcements', label: 'Announcements', icon: Bell },
