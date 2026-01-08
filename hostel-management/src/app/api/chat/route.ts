@@ -39,10 +39,24 @@ export async function POST(req: Request) {
 
         // Mock mode for local testing if key is missing or set to "MOCK"
         if (!apiKey || apiKey === "MOCK") {
-            console.log("Chatbot: Using Mock Mode (Key missing)");
-            return NextResponse.json({
-                content: "I'm currently in **Demo Mode** because the Gemini API Key is not configured. \n\nTo enable my full capabilities, please add `GEMINI_API_KEY` to your `.env` file. \n\nHow can I help you navigate the hostel system today?"
-            });
+            const lowerMsg = message.toLowerCase();
+            let response = "I'm currently in **Basic Mode** (API Key not set). I can still help with general info!";
+
+            if (lowerMsg.includes("fee") || lowerMsg.includes("pay") || lowerMsg.includes("invoice")) {
+                response = "To manage your **Fees**, go to the **Fees** tab in the sidebar. There you can scan the **UPI QR Code** to pay and download your **PDF Tax Invoices**.";
+            } else if (lowerMsg.includes("room") || lowerMsg.includes("change")) {
+                response = "You can view your room details or request a change in the **Room Change** section. Your requests will be reviewed by the Rector.";
+            } else if (lowerMsg.includes("meal") || lowerMsg.includes("food") || lowerMsg.includes("menu")) {
+                response = "Check the **Meal Reviews** section to see today's menu, submit feedback, or opt-out of meals if you'll be away.";
+            } else if (lowerMsg.includes("attendance") || lowerMsg.includes("face") || lowerMsg.includes("register")) {
+                response = "We use **AI Face Recognition**. Make sure to register your face in your **Profile Settings** so you can scan in at the entrance.";
+            } else if (lowerMsg.includes("hello") || lowerMsg.includes("hi")) {
+                response = `Hello ${session.user.name || "there"}! I'm your HMS Assistant. I can help you with fees, room requests, meals, or attendance. What's on your mind?`;
+            } else {
+                response = "I'm in basic mode right now. You can ask me about **fees**, **room changes**, **meal menus**, or **face attendance**!";
+            }
+
+            return NextResponse.json({ content: response });
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
