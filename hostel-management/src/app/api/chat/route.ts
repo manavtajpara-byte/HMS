@@ -35,13 +35,17 @@ export async function POST(req: Request) {
         }
 
         const { message, history } = await req.json();
+        const apiKey = process.env.GEMINI_API_KEY;
 
-        if (!process.env.GEMINI_API_KEY) {
+        // Mock mode for local testing if key is missing or set to "MOCK"
+        if (!apiKey || apiKey === "MOCK") {
+            console.log("Chatbot: Using Mock Mode (Key missing)");
             return NextResponse.json({
-                error: "AI Assistant is currently in maintenance mode (API Key missing). Please contact administration."
-            }, { status: 500 });
+                content: "I'm currently in **Demo Mode** because the Gemini API Key is not configured. \n\nTo enable my full capabilities, please add `GEMINI_API_KEY` to your `.env` file. \n\nHow can I help you navigate the hostel system today?"
+            });
         }
 
+        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const dynamicPrompt = `${SYSTEM_PROMPT}\n\nYou are currently talking to ${session.user.name || "a student"}.`;
@@ -59,11 +63,22 @@ export async function POST(req: Request) {
 
         const result = await chat.sendMessage(message);
         const response = await result.response;
-        const text = response.text();
 
+        // Handle blocked responses or empty candidates
+        if (!response.candidates || response.candidates.length === 0) {
+            return NextResponse.json({
+                error: "The AI was unable to generate a response. This might be due to safety filters."
+            }, { status: 500 });
+        }
+
+        const text = response.text();
         return NextResponse.json({ content: text });
-    } catch (error) {
+
+    } catch (error: any) {
         console.error("Chat Error:", error);
-        return NextResponse.json({ error: "Failed to connect to AI Assistant." }, { status: 500 });
+
+        // Provide more descriptive errors if possible
+        const errorMessage = error?.message || "Failed to connect to AI Assistant.";
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
