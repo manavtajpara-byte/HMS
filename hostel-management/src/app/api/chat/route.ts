@@ -44,10 +44,12 @@ export async function POST(req: Request) {
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+        const dynamicPrompt = `${SYSTEM_PROMPT}\n\nYou are currently talking to ${session.user.name || "a student"}.`;
+
         const chat = model.startChat({
             history: [
-                { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-                { role: "model", parts: [{ text: "Understood. I am the HMS AI Assistant. How can I help you today?" }] },
+                { role: "user", parts: [{ text: dynamicPrompt }] },
+                { role: "model", parts: [{ text: `Understood. I am the HMS AI Assistant. Hello ${session.user.name || "there"}, how can I help you today?` }] },
                 ...history.map((h: any) => ({
                     role: h.role === "user" ? "user" : "model",
                     parts: [{ text: h.content }]

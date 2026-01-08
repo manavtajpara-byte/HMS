@@ -36,10 +36,11 @@ export const authConfig = {
         },
         async jwt({ token, user }) {
             if (user) {
-                // Return a fresh token object with ONLY the id and role
+                // Return a fresh token object with id, role, and name
                 return {
                     id: user.id as string,
                     role: user.role as string,
+                    name: user.name as string,
                 };
             }
             // Sanitize existing token to ensure no large fields persist
@@ -47,6 +48,7 @@ export const authConfig = {
                 return {
                     id: token.id as string,
                     role: token.role as string,
+                    name: token.name as string,
                     sub: token.sub,
                     exp: token.exp,
                     iat: token.iat,
@@ -59,6 +61,7 @@ export const authConfig = {
             if (token && session.user) {
                 session.user.id = token.id as string;
                 session.user.role = token.role as string;
+                session.user.name = token.name as string;
             }
             return session;
         }
